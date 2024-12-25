@@ -185,9 +185,15 @@ func (r *ReconcileConsole) Reconcile(ctx context.Context, request reconcile.Requ
 
 // newDeploymentForCR returns a deployment pod with modifying the ENV
 func newDeploymentForCR(cr *rocketmqv1alpha1.Console) *appsv1.Deployment {
-	env := corev1.EnvVar{
-		Name:  "JAVA_OPTS",
-		Value: fmt.Sprintf("-Drocketmq.namesrv.addr=%s -Dcom.rocketmq.sendMessageWithVIPChannel=false", share.NameServersStr),
+	env := []corev1.EnvVar{
+		{
+			Name:  "JAVA_OPTS",
+			Value: fmt.Sprintf("-Drocketmq.namesrv.addr=%s -Dcom.rocketmq.sendMessageWithVIPChannel=false", share.NameServersStr),
+		},
+		{
+			Name:  "JAVA_OPT",
+			Value: "$(JAVA_OPTS)",
+		},
 	}
 
 	dep := &appsv1.Deployment{
@@ -215,7 +221,7 @@ func newDeploymentForCR(cr *rocketmqv1alpha1.Console) *appsv1.Deployment {
 						Args:            cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Args,
 						Name:            cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Name,
 						ImagePullPolicy: cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy,
-						Env:             append(cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Env, env),
+						Env:             append(cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Env, env...),
 						Ports:           cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Ports,
 						VolumeMounts:    cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].VolumeMounts,
 					}},
