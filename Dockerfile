@@ -15,6 +15,7 @@ COPY pkg/ pkg/
 
 # Build
 ARG TARGETOS TARGETARCH
+RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -a -o manager main.go
 
 # Use distroless as minimal base image to package the manager binary
