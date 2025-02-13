@@ -175,4 +175,10 @@ const (
 
 	// EnvPodIp is the container environment variable name of pod ip.
 	EnvPodIp = "POD_IP"
+
+	// EnvTZ is the container environment variable name of timezone.
+	EnvTZ = "TZ"
+
+	// DefaultTZValue is the default timezone value.
+	DefaultTZValue = "Asia/Shanghai"
 )

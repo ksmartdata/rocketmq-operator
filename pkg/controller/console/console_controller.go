@@ -25,6 +25,7 @@ import (
 
 	rocketmqv1alpha1 "github.com/apache/rocketmq-operator/pkg/apis/rocketmq/v1alpha1"
 	cons "github.com/apache/rocketmq-operator/pkg/constants"
+	util "github.com/apache/rocketmq-operator/pkg/controller"
 	"github.com/apache/rocketmq-operator/pkg/share"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -160,14 +161,8 @@ func (r *ReconcileConsole) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		return reconcile.Result{}, err
-	}
-
-	// Support console deployment update
-	if !reflect.DeepEqual(instance.Spec.ConsoleDeployment.Spec.Replicas, found.Spec.Replicas) ||
-		!reflect.DeepEqual(instance.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Resources, found.Spec.Template.Spec.Containers[0].Resources) {
-
-		found.Spec.Replicas = instance.Spec.ConsoleDeployment.Spec.Replicas
-		found.Spec.Template.Spec.Containers[0].Resources = instance.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Resources
+	} else if !reflect.DeepEqual(consoleDeployment.Spec, found.Spec) {
+		found.Spec = *consoleDeployment.Spec.DeepCopy()
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update console CR", "Namespace", found.Namespace, "Name", found.Name)
@@ -195,7 +190,7 @@ func newDeploymentForCR(cr *rocketmqv1alpha1.Console) *appsv1.Deployment {
 			Value: "$(JAVA_OPTS)",
 		},
 	}
-
+	cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Env = util.SetDefaultTZ(cr.Spec.ConsoleDeployment.Spec.Template.Spec.Containers[0].Env, cons.DefaultTZValue)
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name,

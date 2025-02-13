@@ -29,6 +29,7 @@ import (
 
 	rocketmqv1alpha1 "github.com/apache/rocketmq-operator/pkg/apis/rocketmq/v1alpha1"
 	cons "github.com/apache/rocketmq-operator/pkg/constants"
+	util "github.com/apache/rocketmq-operator/pkg/controller"
 	"github.com/apache/rocketmq-operator/pkg/share"
 	"github.com/apache/rocketmq-operator/pkg/tool"
 	appsv1 "k8s.io/api/apps/v1"
@@ -161,6 +162,13 @@ func (r *ReconcileController) Reconcile(ctx context.Context, request reconcile.R
 		}
 	} else if err != nil {
 		reqLogger.Error(err, "Failed to list Controller StatefulSet.")
+	} else if !reflect.DeepEqual(found.Spec, sts.Spec) {
+		reqLogger.Info("Updating existing Controller StatefulSet.", "StatefulSet.Namespace", sts.Namespace, "StatefulSet.Name", sts.Name)
+		found.Spec = *sts.Spec.DeepCopy()
+		err = r.client.Update(context.TODO(), found)
+		if err != nil {
+			reqLogger.Error(err, "Failed to update StatefulSet", "StatefulSet.Namespace", sts.Namespace, "StatefulSet.Name", sts.Name)
+		}
 	}
 
 	// List the pods for this controller's statefulSet
@@ -322,6 +330,7 @@ func getENV(controller *rocketmqv1alpha1.Controller) []corev1.EnvVar {
 		Name:  cons.EnvControllerStorePath,
 		Value: cons.StoreMountPath,
 	}}
+	controller.Spec.Env = util.SetDefaultTZ(controller.Spec.Env, cons.DefaultTZValue)
 	envs = append(envs, controller.Spec.Env...)
 	return envs
 }
