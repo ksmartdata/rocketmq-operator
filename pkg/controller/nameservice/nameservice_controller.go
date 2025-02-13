@@ -31,6 +31,7 @@ import (
 
 	rocketmqv1alpha1 "github.com/apache/rocketmq-operator/pkg/apis/rocketmq/v1alpha1"
 	cons "github.com/apache/rocketmq-operator/pkg/constants"
+	util "github.com/apache/rocketmq-operator/pkg/controller"
 	"github.com/apache/rocketmq-operator/pkg/share"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -147,6 +148,13 @@ func (r *ReconcileNameService) Reconcile(ctx context.Context, request reconcile.
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
 		reqLogger.Error(err, "Failed to get NameService StatefulSet.")
+	} else if !reflect.DeepEqual(found.Spec, dep.Spec) {
+		reqLogger.Info("Updating existing nameService StatefulSet.", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+		found.Spec = *dep.Spec.DeepCopy()
+		err = r.client.Update(context.TODO(), found)
+		if err != nil {
+			reqLogger.Error(err, "Failed to update StatefulSet", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+		}
 	}
 
 	// Ensure the statefulSet size is the same as the spec
@@ -345,7 +353,7 @@ func (r *ReconcileNameService) statefulSetForNameService(nameService *rocketmqv1
 	if strings.EqualFold(nameService.Spec.VolumeClaimTemplates[0].Name, "") {
 		nameService.Spec.VolumeClaimTemplates[0].Name = uuid.New().String()
 	}
-
+	nameService.Spec.Env = util.SetDefaultTZ(nameService.Spec.Env, cons.DefaultTZValue)
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nameService.Name,

@@ -25,12 +25,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	rocketmqv1alpha1 "github.com/apache/rocketmq-operator/pkg/apis/rocketmq/v1alpha1"
 	cons "github.com/apache/rocketmq-operator/pkg/constants"
+	util "github.com/apache/rocketmq-operator/pkg/controller"
 	"github.com/apache/rocketmq-operator/pkg/share"
 	"github.com/apache/rocketmq-operator/pkg/tool"
+	"github.com/google/uuid"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -182,6 +182,13 @@ func (r *ReconcileBroker) Reconcile(ctx context.Context, request reconcile.Reque
 			}
 		} else if err != nil {
 			reqLogger.Error(err, "Failed to get broker master StatefulSet.")
+		} else if !reflect.DeepEqual(found.Spec, dep.Spec) {
+			reqLogger.Info("Updating existing Master Broker StatefulSet.", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+			found.Spec = *dep.Spec.DeepCopy()
+			err = r.client.Update(context.TODO(), found)
+			if err != nil {
+				reqLogger.Error(err, "Failed to update StatefulSet", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+			}
 		}
 
 		for replicaIndex := 1; replicaIndex <= replicaPerGroup; replicaIndex++ {
@@ -196,6 +203,13 @@ func (r *ReconcileBroker) Reconcile(ctx context.Context, request reconcile.Reque
 				}
 			} else if err != nil {
 				reqLogger.Error(err, "Failed to get broker replica StatefulSet.")
+			} else if !reflect.DeepEqual(found.Spec, replicaDep.Spec) {
+				reqLogger.Info("Updating existing Replica Broker StatefulSet.", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+				found.Spec = *dep.Spec.DeepCopy()
+				err = r.client.Update(context.TODO(), found)
+				if err != nil {
+					reqLogger.Error(err, "Failed to update StatefulSet", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+				}
 			}
 		}
 	}
@@ -533,6 +547,7 @@ func getENV(broker *rocketmqv1alpha1.Broker, replicaIndex int, brokerGroupIndex 
 				FieldPath: "status.podIP"},
 		},
 	}}
+	broker.Spec.Env = util.SetDefaultTZ(broker.Spec.Env, cons.DefaultTZValue)
 	if broker.Spec.ClusterMode == "CONTROLLER" {
 		envs = append(envs, corev1.EnvVar{Name: cons.EnvEnableControllerMode, Value: "true"})
 		envs = append(envs, corev1.EnvVar{Name: cons.EnvControllerAddr, Value: share.ControllerAccessPoint})

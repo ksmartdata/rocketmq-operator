@@ -17,15 +17,18 @@
 
 FROM --platform=$TARGETPLATFORM openjdk:8-alpine
 
-RUN apk add --no-cache bash gettext nmap-ncat openssl busybox-extras
+RUN apk add --no-cache bash gettext nmap-ncat openssl busybox-extras tzdata
+# set default timezone
+ENV TZ=Asia/Shanghai
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
 
 ARG version
 
 # Rocketmq version
-ENV ROCKETMQ_VERSION ${version}
+ENV ROCKETMQ_VERSION=${version}
 
 # Rocketmq home
-ENV ROCKETMQ_HOME  /root/rocketmq/nameserver
+ENV ROCKETMQ_HOME=/root/rocketmq/nameserver
 
 WORKDIR  ${ROCKETMQ_HOME}
 

@@ -24,9 +24,13 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -a -o manager main.
 FROM --platform=$TARGETPLATFORM openjdk:8-alpine
 
 # Install rocketmq release into image
-RUN apk add --no-cache bash gettext nmap-ncat openssl busybox-extras
-ENV ROCKETMQ_HOME  /home/rocketmq
-ENV ROCKETMQ_VERSION 4.9.4
+RUN apk add --no-cache bash gettext nmap-ncat openssl busybox-extras tzdata
+# set default timezone
+ENV TZ=Asia/Shanghai
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
+
+ENV ROCKETMQ_HOME=/home/rocketmq
+ENV ROCKETMQ_VERSION=5.1.4
 WORKDIR  ${ROCKETMQ_HOME}
 RUN set -eux; \
     apk add --virtual .build-deps curl gnupg unzip; \
