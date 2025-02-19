@@ -157,8 +157,10 @@ func (r *ReconcileConsole) Reconcile(ctx context.Context, request reconcile.Requ
 			return reconcile.Result{}, err
 		}
 
-		// created successfully - don't requeue
-		return reconcile.Result{}, nil
+		return reconcile.Result{
+			Requeue:      true,
+			RequeueAfter: time.Duration(cons.RequeueIntervalInSecond) * time.Second,
+		}, nil
 	} else if err != nil {
 		return reconcile.Result{}, err
 	} else if !reflect.DeepEqual(consoleDeployment.Spec, found.Spec) {
@@ -171,11 +173,10 @@ func (r *ReconcileConsole) Reconcile(ctx context.Context, request reconcile.Requ
 		}
 	}
 
-	// TODO: update console if name server address changes
-
-	// CR already exists - don't requeue
-	reqLogger.Info("Skip reconcile: RocketMQ Console Deployment already exists", "Namespace", found.Namespace, "Name", found.Name)
-	return reconcile.Result{}, nil
+	return reconcile.Result{
+		Requeue:      true,
+		RequeueAfter: time.Duration(cons.RequeueIntervalInSecond) * time.Second,
+	}, nil
 }
 
 // newDeploymentForCR returns a deployment pod with modifying the ENV
