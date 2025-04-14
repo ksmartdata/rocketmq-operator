@@ -448,6 +448,23 @@ func (r *ReconcileBroker) getBrokerStatefulSet(broker *rocketmqv1alpha1.Broker, 
 		broker.Spec.VolumeClaimTemplates[0].Name = uuid.New().String()
 	}
 
+	vms := []corev1.VolumeMount{{
+		MountPath: cons.LogMountPath,
+		Name:      broker.Spec.VolumeClaimTemplates[0].Name,
+		SubPath:   cons.LogSubPathName + getPathSuffix(broker, brokerGroupIndex, replicaIndex),
+	}, {
+		MountPath: cons.StoreMountPath,
+		Name:      broker.Spec.VolumeClaimTemplates[0].Name,
+		SubPath:   cons.StoreSubPathName + getPathSuffix(broker, brokerGroupIndex, replicaIndex),
+	}, {
+		MountPath: cons.BrokerConfigPath + "/" + cons.BrokerConfigName,
+		Name:      broker.Spec.Volumes[0].Name,
+		SubPath:   cons.BrokerConfigName,
+	}}
+	vms = append(vms, broker.Spec.VolumeMounts...)
+
+	vs := getVolumes(broker)
+
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      statefulSetName,
@@ -499,21 +516,9 @@ func (r *ReconcileBroker) getBrokerStatefulSet(broker *rocketmqv1alpha1.Broker, 
 							ContainerPort: cons.BrokerHighAvailabilityContainerPort,
 							Name:          cons.BrokerHighAvailabilityContainerPortName,
 						}},
-						VolumeMounts: []corev1.VolumeMount{{
-							MountPath: cons.LogMountPath,
-							Name:      broker.Spec.VolumeClaimTemplates[0].Name,
-							SubPath:   cons.LogSubPathName + getPathSuffix(broker, brokerGroupIndex, replicaIndex),
-						}, {
-							MountPath: cons.StoreMountPath,
-							Name:      broker.Spec.VolumeClaimTemplates[0].Name,
-							SubPath:   cons.StoreSubPathName + getPathSuffix(broker, brokerGroupIndex, replicaIndex),
-						}, {
-							MountPath: cons.BrokerConfigPath + "/" + cons.BrokerConfigName,
-							Name:      broker.Spec.Volumes[0].Name,
-							SubPath:   cons.BrokerConfigName,
-						}},
+						VolumeMounts: vms,
 					}},
-					Volumes:         getVolumes(broker),
+					Volumes:         vs,
 					SecurityContext: getPodSecurityContext(broker),
 				},
 			},

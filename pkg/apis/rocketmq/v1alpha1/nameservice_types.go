@@ -69,6 +69,10 @@ type NameServiceSpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 	// ServiceAccountName
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// Volumes
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+	// VolumeMounts
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 // NameServiceStatus defines the observed state of NameService

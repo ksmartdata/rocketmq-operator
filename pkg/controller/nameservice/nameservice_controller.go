@@ -353,6 +353,14 @@ func (r *ReconcileNameService) statefulSetForNameService(nameService *rocketmqv1
 	if strings.EqualFold(nameService.Spec.VolumeClaimTemplates[0].Name, "") {
 		nameService.Spec.VolumeClaimTemplates[0].Name = uuid.New().String()
 	}
+
+	vms := append([]corev1.VolumeMount{{
+		MountPath: cons.LogMountPath,
+		Name:      nameService.Spec.VolumeClaimTemplates[0].Name,
+		SubPath:   cons.LogSubPathName,
+	}}, nameService.Spec.VolumeMounts...)
+	vs := append(getVolumes(nameService), nameService.Spec.Volumes...)
+
 	nameService.Spec.Env = util.SetDefaultTZ(nameService.Spec.Env, cons.DefaultTZValue)
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -389,14 +397,10 @@ func (r *ReconcileNameService) statefulSetForNameService(nameService *rocketmqv1
 							ContainerPort: cons.NameServiceMainContainerPort,
 							Name:          cons.NameServiceMainContainerPortName,
 						}},
-						VolumeMounts: []corev1.VolumeMount{{
-							MountPath: cons.LogMountPath,
-							Name:      nameService.Spec.VolumeClaimTemplates[0].Name,
-							SubPath:   cons.LogSubPathName,
-						}},
+						VolumeMounts:    vms,
 						SecurityContext: getContainerSecurityContext(nameService),
 					}},
-					Volumes:         getVolumes(nameService),
+					Volumes:         vs,
 					SecurityContext: getPodSecurityContext(nameService),
 				},
 			},

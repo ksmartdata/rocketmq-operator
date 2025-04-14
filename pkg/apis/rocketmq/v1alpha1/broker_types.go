@@ -82,6 +82,8 @@ type BrokerSpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 	// ServiceAccountName
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// VolumeMounts
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 // BrokerStatus defines the observed state of Broker
