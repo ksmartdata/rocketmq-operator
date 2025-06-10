@@ -204,11 +204,11 @@ func (r *ReconcileBroker) Reconcile(ctx context.Context, request reconcile.Reque
 			} else if err != nil {
 				reqLogger.Error(err, "Failed to get broker replica StatefulSet.")
 			} else if !reflect.DeepEqual(found.Spec, replicaDep.Spec) {
-				reqLogger.Info("Updating existing Replica Broker StatefulSet.", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
-				found.Spec = *dep.Spec.DeepCopy()
+				reqLogger.Info("Updating existing Replica Broker StatefulSet.", "StatefulSet.Namespace", replicaDep.Namespace, "StatefulSet.Name", replicaDep.Name)
+				found.Spec = *replicaDep.Spec.DeepCopy()
 				err = r.client.Update(context.TODO(), found)
 				if err != nil {
-					reqLogger.Error(err, "Failed to update StatefulSet", "StatefulSet.Namespace", dep.Namespace, "StatefulSet.Name", dep.Name)
+					reqLogger.Error(err, "Failed to update StatefulSet", "StatefulSet.Namespace", replicaDep.Namespace, "StatefulSet.Name", replicaDep.Name)
 				}
 			}
 		}
