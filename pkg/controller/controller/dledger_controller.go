@@ -248,6 +248,20 @@ func (r *ReconcileController) getControllerStatefulSet(controller *rocketmqv1alp
 		controller.Spec.VolumeClaimTemplates[0].Name = uuid.New().String()
 	}
 
+	vs := getVolumes(controller)
+	vs = append(vs, controller.Spec.Volumes...)
+
+	vms := []corev1.VolumeMount{{
+		MountPath: cons.LogMountPath,
+		Name:      controller.Spec.VolumeClaimTemplates[0].Name,
+		SubPath:   cons.LogSubPathName,
+	}, {
+		MountPath: cons.StoreMountPath,
+		Name:      controller.Spec.VolumeClaimTemplates[0].Name,
+		SubPath:   cons.StoreSubPathName,
+	}}
+	vms = append(vms, controller.Spec.VolumeMounts...)
+
 	var replica = int32(controller.Spec.Size)
 	dep := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -283,18 +297,10 @@ func (r *ReconcileController) getControllerStatefulSet(controller *rocketmqv1alp
 						SecurityContext: getContainerSecurityContext(controller),
 						ImagePullPolicy: controller.Spec.ImagePullPolicy,
 						Env:             getENV(controller),
-						VolumeMounts: []corev1.VolumeMount{{
-							MountPath: cons.LogMountPath,
-							Name:      controller.Spec.VolumeClaimTemplates[0].Name,
-							SubPath:   cons.LogSubPathName,
-						}, {
-							MountPath: cons.StoreMountPath,
-							Name:      controller.Spec.VolumeClaimTemplates[0].Name,
-							SubPath:   cons.StoreSubPathName,
-						}},
+						VolumeMounts:    vms,
 						// Command: []string{"sh", "mqcontroller"},
 					}},
-					Volumes:         getVolumes(controller),
+					Volumes:         vs,
 					SecurityContext: getPodSecurityContext(controller),
 				},
 			},

@@ -70,6 +70,9 @@ type ControllerSpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 	// ServiceAccountName
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	Volumes      []corev1.Volume      `json:"volumes,omitempty"`
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 // ControllerStatus defines the observed state of Controller
